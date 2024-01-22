@@ -15,7 +15,7 @@
 % 2. DEB, Kalyanmoy. "Multi-Objective optimization using evolutionary
 %    algorithms". John Wiley & Sons, LTD. Kanpur, India. 2004.
 
-function [fit err]=test_case(x)
+function [fit err]=object_fun(x)
 global p V
 %% Unconstrained Test functions (for p=1 to p=9)
 if p==1     % Test case problem 1
