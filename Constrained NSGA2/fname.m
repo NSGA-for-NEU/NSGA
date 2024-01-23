@@ -16,7 +16,7 @@
 %    algorithms". John Wiley & Sons, LTD. Kanpur, India. 2004.
 
 function [fit, err] = object_fun(x)
-    global p x_num
+    global p x_num x_max x_min
     %参数设置
     p=input('Testproblem index  :');
     if p==13,  % OSY
@@ -28,24 +28,24 @@ function [fit, err] = object_fun(x)
     if p<=9     % Unconstrained test functions
        tV=[2;30;3;1;30;4;30;10;10];
        x_num=tV(p);
-       txl=[-5*ones(1,x_num);zeros(1,x_num);-5*ones(1,x_num);-1000*ones(1,x_num);zeros(1,x_num);-1/sqrt(x_num)*ones(1,x_num);zeros(1,x_num); 0 -5*ones(1,x_num-1);zeros(1,x_num)]; 
-       txu=[10*ones(1,x_num); ones(1,x_num);5*ones(1,x_num);1000*ones(1,x_num);ones(1,x_num);1/sqrt(x_num) *ones(1,x_num);ones(1,x_num);1 5*ones(1,x_num-1);ones(1,x_num)];
-       xl=(txl(p,1:x_num));            % lower bound x_numector
-       xu=(txu(p,1:x_num));            % upper bound x_numectorfor 
+       tx_min=[-5*ones(1,x_num);zeros(1,x_num);-5*ones(1,x_num);-1000*ones(1,x_num);zeros(1,x_num);-1/sqrt(x_num)*ones(1,x_num);zeros(1,x_num); 0 -5*ones(1,x_num-1);zeros(1,x_num)]; 
+       tx_max=[10*ones(1,x_num); ones(1,x_num);5*ones(1,x_num);1000*ones(1,x_num);ones(1,x_num);1/sqrt(x_num) *ones(1,x_num);ones(1,x_num);1 5*ones(1,x_num-1);ones(1,x_num)];
+       x_min=(tx_min(p,1:x_num));            % lower bound x_num
+       x_max=(tx_max(p,1:x_num));            % upper bound x_num 
        etac = 20;                  % distribution index for crossox_numer
        etam = 20;                  % distribution index for mutation / mutation constant       
     else         % Constrained test functions
        p1=p-9;
        tV=[2;2;2;6;2];
        x_num=tV(p1);
-       txl=[0 0 0 0 0 0;-20 -20 0 0 0 0;0 0 0 0 0 0;0 0 1 0 1 0;0.1 0 0 0 0 0]; 
-       txu=[5 3 0 0 0 0;20 20 0 0 0 0;pi pi 0 0 0 0;10 10 5 6 5 10;1 5 0 0 0 0];
-       xl=(txl(p1,1:x_num));           % lower bound x_numector
-       xu=(txu(p1,1:x_num));           % upper bound x_numectorfor i=1:NN
+       tx_min=[0 0 0 0 0 0;-20 -20 0 0 0 0;0 0 0 0 0 0;0 0 1 0 1 0;0.1 0 0 0 0 0]; 
+       tx_max=[5 3 0 0 0 0;20 20 0 0 0 0;pi pi 0 0 0 0;10 10 5 6 5 10;1 5 0 0 0 0];
+       x_min=(tx_min(p1,1:x_num));           % lower bound x_num
+       x_max=(tx_max(p1,1:x_num));           % upper bound x_num i=1:NN
        etac = 20;                  % distribution index for crossox_numer
        etam = 100;                 % distribution index for mutation / mutation constant
     end
-    
+
     pm=1/x_num;                     % Mutation Probability
 
 
