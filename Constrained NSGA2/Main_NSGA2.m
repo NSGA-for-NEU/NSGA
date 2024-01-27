@@ -16,7 +16,10 @@ global Tj Dj  b  M x etac etam pop_size pm no_runs gen_max lamda_num yuan zhong 
 %    constraint violation in the column (V+M+1), Rank in (V+M+2), Distance in (V+M+3).
 %% code starts
 format long
-b=xlsread('C:\Users\王七月\Desktop\14netdata.xlsx');    %读取网络数据
+
+dt = datetime('now');   %计时开始
+
+b=xlsread('net14.xlsx');    %读取网络数据
 yuan = 3;   %网络的节点数
 zhong = 5;
 hui = 6;
@@ -37,10 +40,10 @@ A = [0 0 0 2 2 2 1 2 0 0 0 0 0 0;
      0 0 0 0 0 0 0 0 0 0 0 0 0 0;
      0 0 0 0 0 0 0 0 0 0 0 0 0 0;
      0 0 0 0 0 0 0 0 0 0 0 0 0 0;
-     0 0 0 0 0 0 0 0 0 0 0 0 0 0]; %9节点邻接矩阵
+     0 0 0 0 0 0 0 0 0 0 0 0 0 0]; %14节点邻接矩阵
 x_min = zeros(1,x_num);  %确定决策变量取值范围
 x_max = zeros(1,x_num);
- k = 0;  
+k = 0;
 for i=1:node
     for j=1:node
         if A(i,j)~=0
@@ -72,51 +75,56 @@ B=look_neighbor(lamda,T);%计算任意两个权重向量间的欧式距离，查找每个权向量最近的
 ref_point = [0,-1];%算法中的参考点  
 for run = 1:no_runs
     %初始化种群数
-   %在可行空间均匀随机产生初始种群 
-x=initialize_X(pop_size,x_num,x_max);
-V=initialize_V(pop_size,x_num,v_min,v_max);
-    
-%初始化个体最优值
-pbest = zeros(pop_size,x_num);
-pbest = x;
-pbest_f = zeros(pop_size,M);
-x_f = zeros(pop_size,M);
-for i = 1:pop_size
-    [x_f(i,1),x_f(i,2)]=minfree_maxflow(b,lamda(i,:),x(i,:),yuan,zhong,hui,ac_node,x_max,Tj,Dj);
-end  %计算目标函数值
-pbest_f = x_f;
-flag = deterdomination(pbest_f, pop_size, M, x_num);% 非支配排序
-EP = [];% EP为非支配解集
-for i = 1:pop_size
-    if flag(i) == 1
-        EP = [EP; x_f(i,:), i, x(i,:)];
+    %在可行空间均匀随机产生初始种群 
+    x=initialize_X(pop_size,x_num,x_max);
+    V=initialize_V(pop_size,x_num,v_min,v_max);
+        
+    %初始化个体最优值
+    pbest = zeros(pop_size,x_num);
+    pbest = x;
+    pbest_f = zeros(pop_size,M);
+    x_f = zeros(pop_size,M);
+    for i = 1:pop_size
+        [x_f(i,1),x_f(i,2)]=minfree_maxflow(b,lamda(i,:),x(i,:),yuan,zhong,hui,ac_node,x_max,Tj,Dj);
+    end  %计算目标函数值
+    pbest_f = x_f;
+    flag = deterdomination(pbest_f, pop_size, M, x_num);% 非支配排序
+    EP = [];% EP为非支配解集
+    for i = 1:pop_size
+        if flag(i) == 1
+            EP = [EP; x_f(i,:), i, x(i,:)];
+        end
     end
-end
     for i =1:pop_size
-      [ff(i,:) ,err(i,:)] =feval(fname, x(i,:));           % 目标函数评估
+      [ff(i,:) ,err(i,:)] =feval(fname, x(i,:), x_max);           % 目标函数评估
     end
     error_norm=normalisation(err);
     population_init=[x ff error_norm];
     [population ,front]=NDSCD_cons(population_init);
     %迭代开始
     for gen_count=1:gen_max
-    % 选择
-    parent_selected=binary_tour_selection(population);%二项锦标赛选择
-    % 繁殖，生成后代
-    child_offspring  = genetic_operator(parent_selected(:,1:x_num ));
-    for i =1:pop_size
-      [fff(i,:) err(i,:)] =feval(fname, x(i,:));           % Objective function evaulation 
+        % 选择
+        parent_selected=binary_tour_selection(population);%二项锦标赛选择
+        % 繁殖，生成后代
+        child_offspring  = genetic_operator(parent_selected(:,1:x_num ));
+        for i =1:pop_size
+          [fff(i,:) err(i,:)] =feval(fname, x(i,:));           % Objective function evaulation 
+        end
+        error_norm=normalisation(err);
+        child_offspring=[child_offspring fff error_norm];
+        %子代与父代合并，种群数为2N
+        population_inter=[population(:,1:x_num +M+1) ; child_offspring(:,1:x_num +M+1)];
+        [population_inter_sorted front]=NDS_CD_cons(population_inter);%非支配解排序并计算聚集距离
+        %精英保留策略选出N个个体，组成新的一代种群
+        new_pop=replacement(population_inter_sorted, front);
+        population=new_pop;
     end
-    error_norm=normalisation(err);
-    child_offspring=[child_offspring fff error_norm];
-    %子代与父代合并，种群数为2N
-    population_inter=[population(:,1:x_num +M+1) ; child_offspring(:,1:x_num +M+1)];
-    [population_inter_sorted front]=NDS_CD_cons(population_inter);%非支配解排序并计算聚集距离
-    %精英保留策略选出N个个体，组成新的一代种群
-    new_pop=replacement(population_inter_sorted, front);
-    population=new_pop;
-    
+    paretoset(run).trial=new_pop(:,1:x_num +M+1);
+    Q = [Q; paretoset(run).trial]; 
+end
 %------------------------评价指标及结果输出--------------------------    
+dt2 = datetime('now');   %计时结束
+
 EP = unique(EP,'rows'); 
 EP = sortrows(EP,1);
 %绘图并保存
@@ -124,7 +132,7 @@ plot(EP(:,1),EP(:,2)*(-1),'-o');
 hold on;
 % saveas(gcf,'C:\Users\Administrator\Desktop\9net\myfig.jpg');
 %计算评价指标Time
-Time = etime(t2,t1);
+Time = dt2 - dt;
 %计算评价指标HV
 HV_value = HV(EP,r); 
 %计算评价指标Spacing
@@ -134,37 +142,30 @@ if number ~= 1
 else
     evaluation = [HV_value 0 Time];
 end
-    
-    
-    
-    
-    %% 计算超立方体积（Hypervolume）指标
-    pop = sortrows(new_pop,x_num +1);
-    index = find(pop(:,x_num +M+2)==1);
-    non_dominated_front = pop(index,x_num +1:x_num +2);
-    hypervolume(gen_count+1) = Hypervolume(non_dominated_front,ref_point);
-    plot(non_dominated_front(:,1),non_dominated_front(:,2),'*')
-    set(gca,'YScale','log')
-    title('NSGAII: Tradeoff')
-    xlabel('objective function 1')
-    ylabel('objective function 2')
-    axis square
-    drawnow
-    pause(1)
-    end
-    paretoset(run).trial=new_pop(:,1:x_num +M+1);
-    Q = [Q; paretoset(run).trial]; 
-end
+%% 计算超立方体积（Hypervolume）指标
+pop = sortrows(new_pop,x_num +1);
+index = find(pop(:,x_num +M+2)==1);
+non_dominated_front = pop(index,x_num +1:x_num +2);
+hypervolume(gen_count+1) = Hypervolume(non_dominated_front,ref_point);
+plot(non_dominated_front(:,1),non_dominated_front(:,2),'*')
+set(gca,'YScale','log')
+title('NSGAII: Tradeoff')
+xlabel('objective function 1')
+ylabel('objective function 2')
+axis square
+drawnow
+pause(1)
+
 % 绘制帕累托面
 if run==1
-index = find(new_pop(:,x_num +M+2)==1);
-non_dominated_front = new_pop(index,x_num +1:x_num +2);
-plot(non_dominated_front(:,1),non_dominated_front(:,2),'*')
+    index = find(new_pop(:,x_num +M+2)==1);
+    non_dominated_front = new_pop(index,x_num +1:x_num +2);
+    plot(non_dominated_front(:,1),non_dominated_front(:,2),'*')
 else                                        
-[pareto_filter front]=NDS_CD_cons(Q);               % Applying non domination sorting on the combined Pareto solution set
-rank1_index=find(pareto_filter(:,x_num +M+2)==1);        % Filtering the best solutions of rank 1 Pareto
-pareto_rank1=pareto_filter(rank1_index,1:x_num +M);
-plot(pareto_rank1(:,V+1),pareto_rank1(:,x_num +2),'*')   % Final Pareto plot
-end
+    [pareto_filter front]=NDS_CD_cons(Q);               % Applying non domination sorting on the combined Pareto solution set
+    rank1_index=find(pareto_filter(:,x_num +M+2)==1);        % Filtering the best solutions of rank 1 Pareto
+    pareto_rank1=pareto_filter(rank1_index,1:x_num +M);
+    plot(pareto_rank1(:,V+1),pareto_rank1(:,x_num +2),'*')   % Final Pareto plot
+end/
 xlabel('objective function 1')
 ylabel('objective function 2')
