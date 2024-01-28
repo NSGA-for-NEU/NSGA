@@ -7,4 +7,12 @@ function chromo = initialize_X(pop_size,x_num,x_max)
         end
     end
     chromo = chromo';
+    for i = pop_size
+        right = check_X(chromo(i,:), x_max);
+        if right == -1
+            for j = 1:x_num
+                chromo(i,j) = randperm(x_max(j),1)-1;
+            end
+        end
+    end
 end
