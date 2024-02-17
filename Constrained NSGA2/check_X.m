@@ -1,4 +1,5 @@
 function right = check_X(wrong, x_max) %yuan*zhong+zhong*hui
+    right = 1;
 % wrong运算规则: startpoint*zhong + 
     data = xlsread('net14.xlsx');
     startpoint = data(1, :);
@@ -9,7 +10,7 @@ function right = check_X(wrong, x_max) %yuan*zhong+zhong*hui
     %拉抻wrong序列， 达到和way长度一致
     test = [];
     for i = 1:length(x_max)
-        if x_max(k) ~= 1
+        if x_max(i) ~= 1
             if wrong(i) == 0 
                 test = [test;1];
             else

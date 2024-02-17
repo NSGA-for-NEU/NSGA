@@ -61,7 +61,7 @@ lamda_num =100;
 pop_size= 100;%种群数
 T=10;     %邻域范围 round(lamda_num/20); 
 Tj = [100 100 100 100 100 100];  %客户要求的到达时间 70*j个
-Dj = [50 30 40 40 30 40];  %客户的需求量[30 40 50] [30 50 40 40 30 30 40 50 30][50 30 40 40 30 40]
+Dj = [50 30 40 40 30 40];  %客户的需求量[30 40 50] [30 50 40 40 30 30 40 50 30] [50 30 40 40 30 40]
 no_runs = 10;%过程循环次数
 gen_max=500;%最大迭代次数
 
@@ -96,7 +96,7 @@ for run = 1:no_runs
         end
     end
     for i =1:pop_size
-      [ff(i,:) ,err(i,:)] =feval(fname, x(i,:), x_max);           % 目标函数评估
+      [ff(i,:) ,err(i,:)] = fname(x(i, :), x_max);           % 目标函数评估
     end
     error_norm=normalisation(err);
     population_init=[x ff error_norm];
@@ -108,7 +108,7 @@ for run = 1:no_runs
         % 繁殖，生成后代
         child_offspring  = genetic_operator(parent_selected(:,1:x_num ));
         for i =1:pop_size
-          [fff(i,:) err(i,:)] =feval(fname, x(i,:));           % Objective function evaulation 
+          [fff(i,:) err(i,:)] = fname(x(i, :), x_max);           % Objective function evaulation 
         end
         error_norm=normalisation(err);
         child_offspring=[child_offspring fff error_norm];
@@ -166,6 +166,6 @@ else
     rank1_index=find(pareto_filter(:,x_num +M+2)==1);        % Filtering the best solutions of rank 1 Pareto
     pareto_rank1=pareto_filter(rank1_index,1:x_num +M);
     plot(pareto_rank1(:,V+1),pareto_rank1(:,x_num +2),'*')   % Final Pareto plot
-end/
+end
 xlabel('objective function 1')
 ylabel('objective function 2')
